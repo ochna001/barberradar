@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_review"
+        android:title="@string/write_a_review"
+        android:icon="@drawable/ic_reviews" />
+    <item
+        android:id="@+id/action_add_appointment"
+        android:title="@string/add_appointment"
+        android:icon="@drawable/ic_calendar" />
+</menu>

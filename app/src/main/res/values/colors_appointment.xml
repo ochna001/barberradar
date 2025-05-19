@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Appointment status colors -->
+    <color name="completed_status">#4CAF50</color>
+    <color name="cancelled_status">#F44336</color>
+    <color name="pending_status">#2196F3</color>
+    
+    <!-- Payment status colors -->
+    <color name="paid_status">#4CAF50</color>
+    <color name="refunded_status">#FF9800</color>
+    <color name="payment_pending_status">#9E9E9E</color>
+    
+    <!-- Appointment card background colors -->
+    <color name="completed_appointment_bg">#E8F5E9</color>
+    <color name="cancelled_appointment_bg">#FFEBEE</color>
+    <color name="pending_appointment_bg">#FFFFFF</color>
+</resources>

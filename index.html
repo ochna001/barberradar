@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barber Radar - Authentication</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Barber Radar</h1>
+                <p>Welcome back!</p>
+            </div>
+            <div id="auth-content">
+                <!-- Sign In Form -->
+                <form id="signInForm" class="auth-form">
+                    <div class="form-group">
+                        <input type="email" id="signInEmail" placeholder="Email/Phone Number" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="signInPassword" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="auth-button">Sign In</button>
+                    <div class="auth-divider">
+                        <span>or</span>
+                    </div>
+                    <button id="googleSignInBtn" class="google-btn">
+                        <img src="https://img.icons8.com/color/24/000000/google-logo.png" alt="Google">
+                        Sign in with Google
+                    </button>
+                </form>
+
+                <!-- Sign Up Form -->
+                <form id="signUpForm" class="auth-form" style="display: none;">
+                    <div class="form-group">
+                        <input type="text" id="fullName" placeholder="Full Name" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="address" placeholder="Address" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" id="signUpEmail" placeholder="Email/Phone Number" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="signUpPassword" placeholder="Password" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                    </div>
+                    <button type="submit" class="auth-button">Sign Up</button>
+                    <div class="auth-divider">
+                        <span>or</span>
+                    </div>
+                    <button id="googleSignUpBtn" class="google-btn">
+                        <img src="https://img.icons8.com/color/24/000000/google-logo.png" alt="Google">
+                        Sign up with Google
+                    </button>
+                </form>
+            </div>
+            <div class="auth-switch">
+                <p>Don't have an account? <span id="switchToSignUp">Sign Up</span></p>
+            </div>
+        </div>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="auth.js"></script>
+</body>
+</html>

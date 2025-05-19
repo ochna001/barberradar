@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Appointment Status -->
+    <string name="status">Status:</string>
+    <string name="payment">Payment:</string>
+    <string name="appointment_pending">Pending</string>
+    <string name="appointment_completed">Completed</string>
+    <string name="appointment_cancelled">Cancelled</string>
+    <string name="payment_paid">Paid</string>
+    <string name="payment_refunded">Refunded</string>
+    
+    <!-- Buttons -->
+    <string name="complete">Complete</string>
+    <string name="cancel">Cancel</string>
+    <string name="mark_as_paid">Mark as Paid</string>
+    
+    <!-- Messages -->
+    <string name="no_appointments_found">No appointments found</string>
+    <string name="no_pending_appointments">No pending appointments found</string>
+    <string name="no_completed_appointments">No completed appointments found</string>
+    <string name="no_cancelled_appointments">No cancelled appointments found</string>
+    <string name="appointment_updated">Appointment updated</string>
+    <string name="error_updating_appointment">Failed to update appointment: %1$s</string>
+    <string name="error_loading_appointments">Failed to load appointments: %1$s</string>
+    <string name="sign_in_required">Please sign in to view appointments</string>
+</resources>
