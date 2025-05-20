@@ -277,11 +277,17 @@ public class DashboardViewModel extends ViewModel {
                                     Log.d("DashboardViewModel", "Using separate lat/lng fields for shop: " + shop.getName());
                                 }
                             }
-                            // Add the shop to our list only if it has valid coordinates
+                            // Add the shop to our list only if it has valid coordinates and is not pending
                             if (shop.getCoordinates() != null) {
+                                // Skip if status is pending
+                                if ("pending".equalsIgnoreCase(shop.getStatus())) {
+                                    Log.d("DashboardViewModel", "Skipping pending shop: " + shop.getName());
+                                    continue;
+                                }
                                 shops.add(shop);
                                 Log.d("DashboardViewModel", "Added shop with coordinates: " + shop.getName() + 
-                                      " at " + shop.getCoordinates().latitude + ", " + shop.getCoordinates().longitude);
+                                      " at " + shop.getCoordinates().latitude + ", " + shop.getCoordinates().longitude +
+                                      " | Status: " + shop.getStatus());
                             } else {
                                 Log.w("DashboardViewModel", "Shop has no valid coordinates: " + shop.getName());
                             }

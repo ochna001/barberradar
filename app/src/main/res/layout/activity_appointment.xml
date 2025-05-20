@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="5dp"
-        android:background="#F8F8F8"
+        android:background="@color/background"
         android:fillViewport="true"
         android:paddingTop="5dp"
         android:paddingBottom="20dp"
@@ -52,7 +52,7 @@
                 android:layout_height="1dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp"
-                android:background="@color/divider_gray" />
+                android:background="@color/divider" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 xmlns:android="http://schemas.android.com/apk/res/android"
@@ -157,7 +157,7 @@
                     android:layout_height="1dp"
                     android:layout_marginTop="8dp"
                     android:layout_marginBottom="8dp"
-                    android:background="@color/divider_gray" />
+                    android:background="@color/divider" />
 
                 <!-- Weekday Labels -->
                 <LinearLayout
@@ -266,7 +266,7 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginBottom="24dp"
-            android:background="@color/divider_gray" />
+            android:background="@color/divider" />
 
         <!-- Section B: Shop Selection (Always visible after Add Appointment is clicked) -->
         <LinearLayout
@@ -274,7 +274,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="50dp"
-            android:background="#FFFFFF"
+            android:background="@color/surface"
             android:elevation="2dp"
             android:orientation="vertical"
             android:padding="16dp"
@@ -297,7 +297,7 @@
                 android:layout_marginTop="12dp"
                 android:fontFamily="sans-serif"
                 android:text="No shops available. Please add shops first."
-                android:textColor="#D32F2F"
+                android:textColor="@color/status_rejected"
                 android:textSize="16sp"
                 android:visibility="gone" />
 
@@ -323,7 +323,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:background="@drawable/spinner_background"
+                android:background="@drawable/edittext_background"
                 android:padding="8dp" />
 
             <!-- "Set Appointment" Button from Section B -->
@@ -346,7 +346,7 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginBottom="24dp"
-            android:background="@color/divider_gray" />
+            android:background="@color/divider" />
 
         <!-- Section C: Appointment Form (Detailed Form) -->
         <!-- Main Form Container -->

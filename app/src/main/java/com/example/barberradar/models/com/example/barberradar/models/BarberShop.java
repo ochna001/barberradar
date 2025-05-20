@@ -32,6 +32,7 @@ public class BarberShop {
     private String rejectionReason; // Reason if shop was rejected
     private int documentCount;     // Number of documents submitted for this shop
     private String phone;          // Shop contact phone number
+    private String verificationDocUrl; // URL for verification document
 
     // Empty constructor required for Firestore
     public BarberShop() {
@@ -83,6 +84,7 @@ public class BarberShop {
     public String getDescription() { return description; }
     public String getWorkingHours() { return workingHours; }
     public String getServicesOffered() { return servicesOffered; }
+    public String getVerificationDocUrl() { return verificationDocUrl; }
 
     // Setters
     public void setId(String id) { this.id = id; }
@@ -103,6 +105,7 @@ public class BarberShop {
     public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
     public void setDocumentCount(int documentCount) { this.documentCount = documentCount; }
     public void setPhone(String phone) { this.phone = phone; }
+    public void setVerificationDocUrl(String verificationDocUrl) { this.verificationDocUrl = verificationDocUrl; }
     public void setDescription(String description) { this.description = description; }
     public void setWorkingHours(String workingHours) { this.workingHours = workingHours; }
     public void setServicesOffered(String servicesOffered) { this.servicesOffered = servicesOffered; }

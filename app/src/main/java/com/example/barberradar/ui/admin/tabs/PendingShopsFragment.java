@@ -108,7 +108,12 @@ public class PendingShopsFragment extends Fragment implements ShopSubmissionAdap
         } else {
             recyclerView.setVisibility(View.VISIBLE);
             emptyView.setVisibility(View.GONE);
-            adapter.updateShops(new ArrayList<>(shops)); // Create a new list to ensure updates are detected
+            
+            // Update the adapter with the new shops
+            adapter.updateShops(new ArrayList<>(shops));
+            
+            // Load owner names for the shops
+            loadOwnerNames(shops);
         }
     }
     
@@ -120,6 +125,7 @@ public class PendingShopsFragment extends Fragment implements ShopSubmissionAdap
         for (BarberShop shop : shops) {
             String ownerId = shop.getOwnerId();
             if (ownerId != null && !ownerId.isEmpty()) {
+                Log.d(TAG, "Loading owner name for shop: " + shop.getName() + ", ownerId: " + ownerId);
                 viewModel.getUserById(ownerId).addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         String ownerName = documentSnapshot.getString("name");
@@ -132,17 +138,32 @@ public class PendingShopsFragment extends Fragment implements ShopSubmissionAdap
                         if (ownerName == null) {
                             ownerName = "User " + documentSnapshot.getId().substring(0, 6);
                         }
+                        Log.d(TAG, "Loaded owner name: " + ownerName + " for ownerId: " + ownerId);
                         // Update the adapter with the owner's name
-                        adapter.updateOwnerName(ownerId, ownerName);
+                        if (adapter != null) {
+                            adapter.updateOwnerName(ownerId, ownerName);
+                        } else {
+                            Log.e(TAG, "Adapter is null when trying to update owner name");
+                        }
+                    } else {
+                        Log.e(TAG, "No user found with ID: " + ownerId);
+                        if (adapter != null) {
+                            adapter.updateOwnerName(ownerId, "Unknown User");
+                        }
                     }
                 }).addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading owner name", e);
+                    Log.e(TAG, "Error loading owner name for ID: " + ownerId, e);
                     // Set a default name if we can't load the owner's name
-                    adapter.updateOwnerName(ownerId, "Unknown User");
+                    if (adapter != null) {
+                        adapter.updateOwnerName(ownerId, "Error loading owner");
+                    }
                 });
             } else {
+                Log.e(TAG, "No owner ID for shop: " + shop.getName());
                 // If no owner ID is available, set a default name
-                adapter.updateOwnerName("", "No owner specified");
+                if (adapter != null) {
+                    adapter.updateOwnerName("", "No owner specified");
+                }
             }
         }
     }
@@ -186,7 +207,10 @@ public class PendingShopsFragment extends Fragment implements ShopSubmissionAdap
 
     @Override
     public void onViewDocuments(BarberShop shop) {
-        // Show a dialog with the shop's documents
+        // Show loading state
+        Toast.makeText(requireContext(), "Loading documents...", Toast.LENGTH_SHORT).show();
+        
+        // Load shop documents
         viewModel.loadShopDocuments(shop);
         
         // Observe the shop documents LiveData
@@ -194,7 +218,12 @@ public class PendingShopsFragment extends Fragment implements ShopSubmissionAdap
             if (documents != null && !documents.isEmpty()) {
                 showDocumentsDialog(shop.getName(), documents);
             } else {
-                Toast.makeText(requireContext(), "No documents available for this shop", Toast.LENGTH_SHORT).show();
+                // Show a more informative message
+                new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("No Documents")
+                    .setMessage("This shop has not uploaded any documents yet.")
+                    .setPositiveButton("OK", null)
+                    .show();
             }
         });
     }
@@ -232,15 +261,35 @@ public class PendingShopsFragment extends Fragment implements ShopSubmissionAdap
     private void showDocumentsDialog(String shopName, List<String> documentUrls) {
         String[] documentTitles = new String[documentUrls.size()];
         for (int i = 0; i < documentUrls.size(); i++) {
-            documentTitles[i] = "Document " + (i + 1) + " (Download)";
+            String url = documentUrls.get(i);
+            // Extract filename from URL if possible
+            String fileName = "Document " + (i + 1);
+            try {
+                Uri uri = Uri.parse(url);
+                String path = uri.getLastPathSegment();
+                if (path != null && !path.isEmpty()) {
+                    // Remove any query parameters
+                    int queryIndex = path.indexOf('?');
+                    if (queryIndex > 0) {
+                        path = path.substring(0, queryIndex);
+                    }
+                    // Use the last path segment as the filename
+                    fileName = path.substring(path.lastIndexOf('/') + 1);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error parsing document URL", e);
+            }
+            documentTitles[i] = fileName + " (View/Download)";
         }
         
         new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Documents for " + shopName)
+                .setTitle("Verification Documents for " + shopName)
                 .setItems(documentTitles, (dialog, which) -> {
                     // Download the selected document
                     String url = documentUrls.get(which);
-                    downloadDocument(url, "Shop_" + shopName + "_Doc" + (which + 1));
+                    // Use the shop name and document index for the filename
+                    String fileName = "Verification_" + shopName.replaceAll("[^a-zA-Z0-9]", "_") + "_" + (which + 1);
+                    downloadDocument(url, fileName);
                 })
                 .setPositiveButton("Close", null)
                 .show();

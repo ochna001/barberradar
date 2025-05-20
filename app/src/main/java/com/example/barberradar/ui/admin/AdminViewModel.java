@@ -92,23 +92,47 @@ public class AdminViewModel extends ViewModel {
             return;
         }
         
+        // First check if there's a verificationDocUrl directly in the shop document
+        if (shop.getVerificationDocUrl() != null && !shop.getVerificationDocUrl().isEmpty()) {
+            List<String> documentUrls = new ArrayList<>();
+            documentUrls.add(shop.getVerificationDocUrl());
+            shopDocuments.setValue(documentUrls);
+            return;
+        }
+        
+        // If no direct URL, check the documents subcollection
         db.collection("shops")
                 .document(shopId)
                 .collection("documents")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     List<String> documentUrls = new ArrayList<>();
+                    
+                    // First add the verificationDocUrl if it exists
+                    if (shop.getVerificationDocUrl() != null && !shop.getVerificationDocUrl().isEmpty()) {
+                        documentUrls.add(shop.getVerificationDocUrl());
+                    }
+                    
+                    // Then add any documents from the subcollection
                     for (DocumentSnapshot doc : queryDocumentSnapshots) {
                         String url = doc.getString("url");
                         if (url != null && !url.isEmpty()) {
                             documentUrls.add(url);
                         }
                     }
+                    
                     shopDocuments.setValue(documentUrls);
                 })
                 .addOnFailureListener(e -> {
-                    errorMessage.setValue("Failed to load documents: " + e.getMessage());
-                    Log.e(TAG, "Error loading shop documents", e);
+                    // Even if subcollection fails, check if we have a direct URL
+                    if (shop.getVerificationDocUrl() != null && !shop.getVerificationDocUrl().isEmpty()) {
+                        List<String> documentUrls = new ArrayList<>();
+                        documentUrls.add(shop.getVerificationDocUrl());
+                        shopDocuments.setValue(documentUrls);
+                    } else {
+                        errorMessage.setValue("Failed to load documents: " + e.getMessage());
+                        Log.e(TAG, "Error loading shop documents", e);
+                    }
                 });
     }
     
@@ -116,8 +140,20 @@ public class AdminViewModel extends ViewModel {
      * Loads all shops with 'pending' status
      */
     public void loadPendingShops() {
+        Log.d(TAG, "Loading pending shops...");
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         
+        db.collection("shops")
+            .whereEqualTo("status", "pending")
+            .get()
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Log.d(TAG, "Pending shops query successful. Found " + task.getResult().size() + " shops");
+                } else {
+                    Log.e(TAG, "Error getting pending shops: ", task.getException());
+                }
+            });
+            
         db.collection("shops")
             .whereEqualTo("status", "pending")
             .get()
@@ -164,11 +200,37 @@ public class AdminViewModel extends ViewModel {
                             // Add shop to list immediately
                             shops.add(shop);
                             
-                            // Fetch owner's name if ownerId is available
-                            if (ownerId != null && !ownerId.isEmpty()) {
-                                db.collection("users").document(ownerId).get()
+                            // Update the UI with the current list
+                            pendingShops.postValue(new ArrayList<>(shops));
+                            
+                            // Debug log
+                            Log.d(TAG, "Processing shop: " + shop.getName() + 
+                                  " | Owner ID: " + ownerId + 
+                                  " | Current submittedBy: " + shop.getSubmittedBy() + 
+                                  " | Current submissionDate: " + shop.getSubmissionDate());
+
+                            // First try to get owner ID from submittedBy field, then fall back to ownerId
+                            String ownerIdToUse = document.contains("submittedBy") ? 
+                                document.getString("submittedBy") : 
+                                shop.getOwnerId();
+                            
+                            shop.setSubmittedBy(ownerIdToUse);
+                            
+                            if (ownerIdToUse != null && !ownerIdToUse.isEmpty()) {
+                                Log.d(TAG, "Fetching user document for owner ID: " + ownerIdToUse);
+                                
+                                db.collection("users").document(ownerIdToUse).get()
                                     .addOnSuccessListener(ownerDoc -> {
                                         if (ownerDoc.exists()) {
+                                            Log.d(TAG, "Found user document for owner ID: " + ownerIdToUse);
+                                            
+                                            // Debug log all fields in the user document
+                                            Map<String, Object> userData = ownerDoc.getData();
+                                            if (userData != null) {
+                                                Log.d(TAG, "User document fields: " + userData.keySet());
+                                            }
+                                            
+                                            // Try multiple possible name fields
                                             String ownerName = ownerDoc.getString("name");
                                             if (ownerName == null) {
                                                 ownerName = ownerDoc.getString("fullName");
@@ -177,22 +239,38 @@ public class AdminViewModel extends ViewModel {
                                                 ownerName = ownerDoc.getString("displayName");
                                             }
                                             if (ownerName == null) {
+                                                ownerName = ownerDoc.getString("email");
+                                                if (ownerName != null) {
+                                                    ownerName = ownerName.split("@")[0]; // Just use the part before @
+                                                }
+                                            }
+                                            if (ownerName == null) {
                                                 ownerName = "User " + ownerDoc.getId().substring(0, 6);
                                             }
-                                            // Update the shop with the owner's name
-                                            shop.setSubmittedBy(ownerName);
-                                            // Notify the adapter that data has changed
-                                            pendingShops.postValue(new ArrayList<>(shops));
+                                            
+                                            Log.d(TAG, "Setting owner name to: " + ownerName);
+                                            shop.setSubmissionDate("Owner: " + ownerName);
+                                            updateShopInList(shop);
+                                            
+                                            // Debug log after update
+                                            Log.d(TAG, "After update - Shop ID: " + shop.getId() + 
+                                                  " | Owner ID: " + ownerIdToUse + 
+                                                  " | Owner Name: " + ownerName);
+                                        } else {
+                                            Log.e(TAG, "No user document found for owner ID: " + ownerIdToUse);
+                                            shop.setSubmissionDate("Owner: Unknown (ID: " + ownerIdToUse + ")");
+                                            updateShopInList(shop);
                                         }
                                     })
                                     .addOnFailureListener(e -> {
-                                        Log.e(TAG, "Error fetching shop owner", e);
-                                        shop.setSubmittedBy("Unknown User");
-                                        pendingShops.postValue(new ArrayList<>(shops));
+                                        Log.e(TAG, "Error fetching shop owner for ID: " + ownerIdToUse, e);
+                                        shop.setSubmissionDate("Owner: Error loading (ID: " + ownerIdToUse + ")");
+                                        updateShopInList(shop);
                                     });
                             } else {
-                                shop.setSubmittedBy("No owner specified");
-                                pendingShops.postValue(new ArrayList<>(shops));
+                                Log.d(TAG, "No owner ID available for shop: " + shop.getName());
+                                shop.setSubmissionDate("No owner specified");
+                                updateShopInList(shop);
                             }
                             
                             // Update the UI with the current list
@@ -325,6 +403,22 @@ public class AdminViewModel extends ViewModel {
             });
     }
     
+    /**
+     * Helper method to update a shop in the pending shops list
+     */
+    private void updateShopInList(BarberShop updatedShop) {
+        List<BarberShop> currentShops = pendingShops.getValue();
+        if (currentShops != null) {
+            for (int i = 0; i < currentShops.size(); i++) {
+                if (currentShops.get(i).getId().equals(updatedShop.getId())) {
+                    currentShops.set(i, updatedShop);
+                    break;
+                }
+            }
+            pendingShops.postValue(currentShops);
+        }
+    }
+
     /**
      * Loads all users
      */

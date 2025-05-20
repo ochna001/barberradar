@@ -20,6 +20,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ShopSubmissionAdapter extends RecyclerView.Adapter<ShopSubmissionAdapter.ShopSubmissionViewHolder> {
     private static final String TAG = "ShopSubmissionAdapter";
@@ -149,19 +150,51 @@ public class ShopSubmissionAdapter extends RecyclerView.Adapter<ShopSubmissionAd
             holder.shopStatus.setVisibility(View.GONE);
         }
         
-        // Set owner info
+        // Debug log
         String ownerName = shop.getSubmittedBy();
         String ownerId = shop.getOwnerId();
+        String submissionDate = shop.getSubmissionDate();
         
-        if (ownerName != null && !ownerName.isEmpty()) {
+        Log.d(TAG, "Binding shop: " + shop.getName() + 
+              " | ID: " + shop.getId() + 
+              " | Owner ID: " + ownerId + 
+              " | Submitted By: " + ownerName + 
+              " | Submission Date: " + submissionDate);
+        
+        // First check if we have a direct owner name
+        if (ownerName != null && !ownerName.isEmpty() && !ownerName.equals("Loading...")) {
+            Log.d(TAG, "Using direct owner name: " + ownerName);
             holder.shopOwner.setText("Owner: " + ownerName);
-        } else if (ownerId != null && !ownerId.isEmpty()) {
+        } 
+        // Then check if submissionDate contains owner info (format: "Owner: Name")
+        else if (submissionDate != null && submissionDate.startsWith("Owner: ")) {
+            Log.d(TAG, "Using submission date for owner: " + submissionDate);
+            holder.shopOwner.setText(submissionDate);
+        }
+        // Then try to load from ownerId if available
+        else if (ownerId != null && !ownerId.isEmpty()) {
+            Log.d(TAG, "Loading owner info from ID: " + ownerId);
             loadOwnerInfo(holder, shop, ownerId);
-        } else {
+        } 
+        // Fallback to unknown owner
+        else {
+            Log.d(TAG, "No owner information available");
             holder.shopOwner.setText("Owner: Not specified");
         }
         
-        // Set up document view button
+        // Set up document view button - always visible and clickable
+        // The actual document check happens in the fragment
+        holder.viewDocsButton.setVisibility(View.VISIBLE);
+        holder.viewDocsButton.setEnabled(true);
+        holder.viewDocsButton.setAlpha(1.0f);
+        
+        // Update the button text to show document count if available
+        String buttonText = "View Documents";
+        if (shop.getDocumentCount() > 0) {
+            buttonText += " (" + shop.getDocumentCount() + ")";
+        }
+        holder.viewDocsButton.setText(buttonText);
+        
         holder.viewDocsButton.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onViewDocuments(shop);
@@ -172,9 +205,10 @@ public class ShopSubmissionAdapter extends RecyclerView.Adapter<ShopSubmissionAd
         String currentStatus = shopStatus != null ? shopStatus.toLowerCase() : "";
         setupStatusButton(holder, shop, currentStatus);
         
-        // Set up edit button if the user is a shop owner
+        // Set up edit and appointments buttons - only show for non-admin shop owners
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null && currentUser.getUid().equals(shop.getOwnerId())) {
+        if (!isAdmin && currentUser != null && currentUser.getUid().equals(shop.getOwnerId())) {
+            // Show edit and appointments buttons for non-admin shop owners
             holder.editButton.setVisibility(View.VISIBLE);
             holder.editButton.setOnClickListener(v -> {
                 if (listener != null) {
@@ -182,7 +216,6 @@ public class ShopSubmissionAdapter extends RecyclerView.Adapter<ShopSubmissionAd
                 }
             });
             
-            // Also set up appointments button for shop owners
             holder.appointmentsButton.setVisibility(View.VISIBLE);
             holder.appointmentsButton.setOnClickListener(v -> {
                 if (listener != null) {
@@ -190,47 +223,80 @@ public class ShopSubmissionAdapter extends RecyclerView.Adapter<ShopSubmissionAd
                 }
             });
         } else {
+            // Hide these buttons for admin users and non-owners
             holder.editButton.setVisibility(View.GONE);
             holder.appointmentsButton.setVisibility(View.GONE);
         }
         
-        // Document count badge is not in the layout, so we'll handle the visibility of the view docs button
-        if (holder.viewDocsButton != null) {
-            holder.viewDocsButton.setVisibility(shop.getDocumentCount() > 0 ? View.VISIBLE : View.GONE);
-        }
+        // Always show the View Documents button and make it clickable
+        holder.viewDocsButton.setVisibility(View.VISIBLE);
+        holder.viewDocsButton.setEnabled(true);
+        holder.viewDocsButton.setAlpha(1.0f);
     }
     
     private void loadOwnerInfo(ShopSubmissionViewHolder holder, BarberShop shop, String ownerId) {
         holder.shopOwner.setText("Owner: Loading...");
-        Log.d(TAG, "Fetching owner name for ID: " + ownerId);
+        Log.d(TAG, "[loadOwnerInfo] Fetching owner name for ID: " + ownerId);
         
         FirebaseFirestore.getInstance().collection("users")
             .document(ownerId)
             .get()
             .addOnSuccessListener(documentSnapshot -> {
                 if (documentSnapshot.exists()) {
+                    // Debug log all user data
+                    Map<String, Object> userData = documentSnapshot.getData();
+                    if (userData != null) {
+                        Log.d(TAG, "[loadOwnerInfo] User data fields: " + userData.keySet());
+                        for (Map.Entry<String, Object> entry : userData.entrySet()) {
+                            Log.d(TAG, "  " + entry.getKey() + 
+                                  ": " + entry.getValue() + 
+                                  " (" + (entry.getValue() != null ? entry.getValue().getClass().getSimpleName() : "null") + ")");
+                        }
+                    }
+                    
+                    // Try multiple possible name fields
                     String displayName = documentSnapshot.getString("displayName");
+                    String name = documentSnapshot.getString("name");
+                    String fullName = documentSnapshot.getString("fullName");
                     String email = documentSnapshot.getString("email");
-                    String userInfo = "";
+                    String userInfo;
                     
                     if (displayName != null && !displayName.isEmpty()) {
                         userInfo = displayName;
+                    } else if (name != null && !name.isEmpty()) {
+                        userInfo = name;
+                    } else if (fullName != null && !fullName.isEmpty()) {
+                        userInfo = fullName;
                     } else if (email != null && !email.isEmpty()) {
-                        userInfo = email;
+                        userInfo = email.split("@")[0]; // Use email username if no name fields
                     } else {
-                        userInfo = "Unknown Owner";
+                        userInfo = "User " + documentSnapshot.getId().substring(0, 6);
                     }
                     
+                    Log.d(TAG, "[loadOwnerInfo] Setting owner name to: " + userInfo);
+                    
+                    // Update both the shop object and the UI
                     shop.setSubmittedBy(userInfo);
-                    holder.shopOwner.setText("Owner: " + userInfo);
-                    Log.d(TAG, "Updated owner name to: " + userInfo);
+                    shop.setSubmissionDate("Owner: " + userInfo);
+                    String finalUserInfo = userInfo;
+                    holder.shopOwner.post(() -> {
+                        holder.shopOwner.setText("Owner: " + finalUserInfo);
+                    });
+                    
+                    // Notify the adapter that data has changed
+                    notifyItemChanged(holder.getAdapterPosition());
                 } else {
-                    holder.shopOwner.setText("Owner: Unknown");
+                    Log.e(TAG, "[loadOwnerInfo] No user document found for ID: " + ownerId);
+                    holder.shopOwner.post(() -> {
+                        holder.shopOwner.setText("Owner: Unknown");
+                    });
                 }
             })
             .addOnFailureListener(e -> {
-                Log.e(TAG, "Error fetching owner name", e);
-                holder.shopOwner.setText("Owner: Error loading");
+                Log.e(TAG, "[loadOwnerInfo] Error fetching owner name for ID: " + ownerId, e);
+                holder.shopOwner.post(() -> {
+                    holder.shopOwner.setText("Owner: Error loading");
+                });
             });
     }
     

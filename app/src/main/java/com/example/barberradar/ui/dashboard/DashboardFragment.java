@@ -289,9 +289,15 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback, B
             if (allShops != null && !allShops.isEmpty()) {
                 Log.d("BarberRadar", "onViewCreated: RecyclerView loaded with " + allShops.size() + " shops.");
 
-                // Update the full shop list.
+                // Update the full shop list, filtering out pending shops
                 fullShopList.clear();
-                fullShopList.addAll(allShops);
+                for (BarberShop shop : allShops) {
+                    if (shop.getStatus() == null || !shop.getStatus().equalsIgnoreCase("pending")) {
+                        fullShopList.add(shop);
+                    }
+                }
+                Log.d("BarberRadar", "Filtered out pending shops. Showing " + fullShopList.size() + " out of " + allShops.size() + " total shops");
+                
                 // Create initial sublist (limit to 5 shops)
                 displayedShops.clear();
                 int initialCount = Math.min(5, fullShopList.size());

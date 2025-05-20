@@ -29,7 +29,7 @@
         <activity
             android:name=".ui.auth.LoginActivity"
             android:exported="true"
-            android:label="Sign In">
+            android:label="BarberRadar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -40,7 +40,7 @@
         <activity
             android:name=".ui.auth.RegisterActivity"
             android:exported="false"
-            android:label="Sign Up" />
+            android:label="BarberRadar" />
             
         <activity
             android:name=".MainActivity"
@@ -55,7 +55,7 @@
         <!-- Payment Activity -->
         <activity
             android:name=".payment.PaymentActivity"
-            android:exported="false"
+            android:exported="true"
             android:label="Payment"
             android:theme="@style/Theme.BarberRadar"
             android:windowSoftInputMode="adjustResize">

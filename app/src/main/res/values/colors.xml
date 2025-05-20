@@ -1,36 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
+    <!-- Material Design Colors -->
+    <color name="purple_200">#BB86FC</color>
+    <color name="purple_500">#6200EE</color>
+    <color name="purple_700">#3700B3</color>
+    <color name="teal_200">#03DAC5</color>
+    <color name="teal_700">#018786</color>
+    
+    <!-- Basic Colors -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="selected_date">#FFEB3B</color>
-    <color name="divider_gray">#DDDDDD</color>
-    <color name="primary_text">#333333</color>
-    <color name="accent">#007AFF</color>
+    <color name="transparent">#00000000</color>
     
-    <!-- Auth screen colors -->
-    <color name="primary">#2196F3</color>
-    <color name="secondary">#03A9F4</color>
-    <color name="text_primary">#333333</color>
-    <color name="text_secondary">#757575</color>
+    <!-- Background Colors -->
+    <color name="background">#FAFAFA</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="error">#B00020</color>
+    
+    <!-- Text and Icons -->
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_secondary">#000000</color>
+    <color name="on_background">#121212</color>
+    <color name="on_surface">#1F1F1F</color>
+    <color name="on_error">#FFFFFF</color>
+    
+    <!-- Primary Colors (Blue) -->
+    <color name="primary">#1A73E8</color>
+    <color name="primary_dark">#1557B0</color>
+    <color name="primary_light">#63A4FF</color>
+    
+    <!-- Secondary Colors (Light Blue) -->
+    <color name="secondary">#1E88E5</color>
+    <color name="secondary_dark">#1565C0</color>
+    <color name="secondary_light">#6AB7FF</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#1F1F1F</color>
+    <color name="text_secondary">#5F6368</color>
+    <color name="text_hint">#9AA0A6</color>
+    <color name="text_disabled">#C5C5C5</color>
+    
+    <!-- Status Colors -->
+    <color name="status_pending">#FB8C00</color>  <!-- Orange 700 -->
+    <color name="status_approved">#388E3C</color>  <!-- Green 700 -->
+    <color name="status_rejected">#D32F2F</color>  <!-- Red 700 -->
+    
+    <!-- UI Elements -->
     <color name="divider">#E0E0E0</color>
-    <color name="background">#F5F5F5</color>
+    <color name="divider_dark">#BDBDBD</color>
+    <color name="ripple">#1F000000</color>
+    <color name="selected_date">#E3F2FD</color>
     
-    <!-- Shop status colors -->
-    <color name="status_pending">#FFC107</color> <!-- Amber -->
-    <color name="status_approved">#4CAF50</color> <!-- Green -->
-    <color name="status_rejected">#F44336</color> <!-- Red -->
+    <!-- Card and Surface -->
+    <color name="card_background">#FFFFFF</color>
+    <color name="card_elevation">#F5F5F5</color>
+    <color name="card_stroke">#E0E0E0</color>
     
-    <!-- Additional colors for shop submission -->
-    <color name="colorPrimary">#2196F3</color>
-    <color name="colorPending">#FFC107</color>
-    <color name="colorApproved">#4CAF50</color>
-    <color name="colorRejected">#F44336</color>
+    <!-- Buttons -->
+    <color name="button_primary">#1A73E8</color>
+    <color name="button_primary_text">#FFFFFF</color>
+    <color name="button_secondary">#E8F0FE</color>
+    <color name="button_secondary_text">#1A73E8</color>
+    <color name="button_disabled">#F1F3F4</color>
+    <color name="button_disabled_text">#9AA0A6</color>
     
-    <!-- Error and status colors -->
-    <color name="colorError">#F44336</color>  <!-- Same as colorRejected for consistency -->
+    <!-- For backward compatibility -->
+    <color name="colorPrimary">@color/primary</color>
+    <color name="colorPrimaryDark">@color/primary_dark</color>
+    <color name="colorAccent">@color/primary</color>
+    <color name="colorPending">@color/status_pending</color>
+    <color name="colorApproved">@color/status_approved</color>
+    <color name="colorRejected">@color/status_rejected</color>
+    <color name="colorError">@color/error</color>
+    <color name="primary_text">@color/text_primary</color>
+    <color name="accent">@color/primary</color>
 </resources>

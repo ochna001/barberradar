@@ -26,7 +26,7 @@ public interface PayMongoApiService {
      */
     @POST("payment_intents")
     Call<CreatePaymentIntentResponse> createPaymentIntent(
-            @Header("Authorization") String authorization,
+            @Header("Authorizatioan") String authorization,
             @Body CreatePaymentIntentRequest request
     );
     

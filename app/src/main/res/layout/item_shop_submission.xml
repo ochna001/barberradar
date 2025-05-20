@@ -6,9 +6,12 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="8dp"
-    android:layout_marginVertical="4dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="2dp">
+    android:layout_marginVertical="6dp"
+    app:cardBackgroundColor="@color/card_background"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:strokeColor="@color/card_stroke"
+    app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -27,64 +30,60 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:src="@android:drawable/ic_menu_gallery" />
 
-        <!-- Shop Details Container -->
+        <!-- Shop Name and Status (Top Row) -->
+        <LinearLayout
+            android:id="@+id/top_row"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            app:layout_constraintStart_toEndOf="@id/iv_submission_shop_image"
+            app:layout_constraintEnd_toStartOf="@id/btn_view_documents"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/tv_submission_shop_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:text="Sample Shop Name" />
+
+            <!-- Status Chip -->
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_status"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:textAllCaps="true"
+                android:textSize="10sp"
+                android:textColor="@color/white"
+                app:chipBackgroundColor="@color/colorPending"
+                app:chipMinHeight="24dp"
+                tools:text="PENDING" />
+        </LinearLayout>
+
+
+
+        <!-- Shop Details (Below Shop Name) -->
         <LinearLayout
             android:id="@+id/shop_details_container"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
+            android:layout_marginTop="4dp"
             android:orientation="vertical"
             app:layout_constraintStart_toEndOf="@id/iv_submission_shop_image"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <!-- Shop Name and Status -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <TextView
-                    android:id="@+id/tv_submission_shop_name"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="16sp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    tools:text="Barbershop Name" />
-
-                <!-- Status Badge -->
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_status"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    app:chipBackgroundColor="@color/colorPending"
-                    app:chipMinHeight="24dp"
-                    app:chipStartPadding="8dp"
-                    app:chipEndPadding="8dp"
-                    tools:text="Pending" />
-
-                <!-- Document Count Badge -->
-                <TextView
-                    android:id="@+id/doc_badge"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_marginStart="4dp"
-                    android:background="@drawable/bg_document_badge"
-                    android:gravity="center"
-                    android:textColor="@android:color/white"
-                    android:textSize="10sp"
-                    android:visibility="gone"
-                    tools:text="3" />
-            </LinearLayout>
+            app:layout_constraintTop_toBottomOf="@id/top_row">
 
             <!-- Shop Address -->
             <TextView
@@ -92,11 +91,24 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:textColor="@android:color/darker_gray"
-                android:textSize="14sp"
-                android:maxLines="2"
                 android:ellipsize="end"
-                tools:text="123 Main Street, City, State 12345" />
+                android:maxLines="2"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"
+                tools:text="123 Sample Address, City, Country" />
+
+            <!-- Document Count Badge -->
+            <TextView
+                android:id="@+id/doc_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/badge_background"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp"
+                android:textColor="@android:color/white"
+                android:textSize="10sp"
+                tools:text="3 documents" />
 
             <!-- Owner and Submission Info -->
             <TextView
@@ -104,95 +116,107 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:textColor="@android:color/darker_gray"
+                android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 tools:text="Owner: John Doe • Submitted: May 18, 2025" />
 
-            <!-- Action Buttons -->
-            <LinearLayout
+            <!-- View Documents Button (Bottom of Details) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_view_documents"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="end"
-                android:paddingTop="8dp">
+                android:layout_height="36dp"
+                android:layout_marginTop="12dp"
+                android:backgroundTint="@color/button_secondary"
+                android:text="@string/view_documents"
+                android:textColor="@color/button_secondary_text"
+                android:textSize="12sp"
+                app:icon="@drawable/ic_document"
+                app:iconGravity="textStart"
+                app:iconTint="@color/button_secondary_text"
+                app:strokeColor="@color/button_secondary_text"
+                app:strokeWidth="1dp"
+                app:iconPadding="4dp"
+                app:cornerRadius="18dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                app:rippleColor="@color/ripple" />
+        </LinearLayout>
 
-                <!-- Edit Button -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_edit_shop"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:layout_marginEnd="8dp"
-                    android:text="@string/edit"
-                    android:textSize="12sp"
-                    app:icon="@drawable/ic_edit"
-                    app:iconGravity="textStart"
-                    app:iconTint="@color/colorPrimary"
-                    app:strokeColor="@color/colorPrimary"
-                    app:strokeWidth="1dp"
-                    app:iconPadding="4dp"
-                    app:cornerRadius="18dp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp" />
+        <!-- Action Buttons (Bottom Row) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="end"
+            app:layout_constraintTop_toBottomOf="@id/shop_details_container">
 
-                <!-- View Documents Button -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_view_documents"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:text="@string/view_documents"
-                    android:textSize="12sp"
-                    app:icon="@drawable/ic_document"
-                    app:iconGravity="textStart"
-                    app:iconTint="@color/colorPrimary"
-                    app:strokeColor="@color/colorPrimary"
-                    app:strokeWidth="1dp"
-                    app:iconPadding="4dp"
-                    app:cornerRadius="18dp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:layout_marginEnd="8dp" />
-                
-                <!-- View Appointments Button -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_view_appointments"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:text="Appointments"
-                    android:textSize="12sp"
-                    app:icon="@android:drawable/ic_menu_today"
-                    app:iconGravity="textStart"
-                    app:iconTint="@color/colorPrimary"
-                    app:strokeColor="@color/colorPrimary"
-                    app:strokeWidth="1dp"
-                    app:iconPadding="4dp"
-                    app:cornerRadius="18dp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:layout_marginEnd="8dp" />
-                
+            <!-- Edit Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_edit_shop"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@color/button_secondary"
+                android:text="@string/edit"
+                android:textColor="@color/button_secondary_text"
+                android:textSize="12sp"
+                app:icon="@drawable/ic_edit"
+                app:iconGravity="textStart"
+                app:iconTint="@color/button_secondary_text"
+                app:strokeColor="@color/button_secondary_text"
+                app:strokeWidth="1dp"
+                app:iconPadding="4dp"
+                app:cornerRadius="18dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                app:rippleColor="@color/ripple" />
 
-                <!-- Toggle Status Button (Only visible to admin) -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_toggle_status"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:text="@string/approve"
-                    android:textSize="12sp"
-                    app:icon="@drawable/ic_check_circle"
-                    app:iconGravity="textStart"
-                    app:iconTint="@color/colorPrimary"
-                    app:strokeColor="@color/colorPrimary"
-                    app:strokeWidth="1dp"
-                    app:iconPadding="4dp"
-                    app:cornerRadius="18dp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:visibility="gone" />
-            </LinearLayout>
+            <!-- View Appointments Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_view_appointments"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@color/button_secondary"
+                android:text="Appointments"
+                android:textColor="@color/button_secondary_text"
+                android:textSize="12sp"
+                app:icon="@android:drawable/ic_menu_today"
+                app:iconGravity="textStart"
+                app:iconTint="@color/button_secondary_text"
+                app:strokeColor="@color/button_secondary_text"
+                app:strokeWidth="1dp"
+                app:iconPadding="4dp"
+                app:cornerRadius="18dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                app:rippleColor="@color/ripple" />
+
+            <!-- Toggle Status Button (Only visible to admin) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_toggle_status"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:backgroundTint="@color/button_primary"
+                android:text="@string/approve"
+                android:textColor="@color/button_primary_text"
+                android:textSize="12sp"
+                app:icon="@drawable/ic_check_circle"
+                app:iconGravity="textStart"
+                app:iconTint="@color/button_primary_text"
+                app:strokeColor="@color/button_primary"
+                app:strokeWidth="1dp"
+                app:iconPadding="4dp"
+                app:cornerRadius="18dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:visibility="gone"
+                app:rippleColor="@color/ripple" />
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

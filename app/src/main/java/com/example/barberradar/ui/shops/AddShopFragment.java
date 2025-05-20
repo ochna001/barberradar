@@ -230,6 +230,7 @@ public class AddShopFragment extends Fragment {
                             shopData.put("verificationDocUrl", documentUrl);
                             shopData.put("createdAt", System.currentTimeMillis());
                             shopData.put("visible", true); // Make all shops visible by default
+                            shopData.put("status", "pending"); // Set status to pending for admin approval
                             
                             // Save to Firestore
                             saveShopDataToFirestore(shopData);
@@ -250,6 +251,7 @@ public class AddShopFragment extends Fragment {
                             shopData.put("verificationPending", true);
                             shopData.put("createdAt", System.currentTimeMillis());
                             shopData.put("visible", true);
+                            shopData.put("status", "pending"); // Set status to pending for admin approval
                             
                             saveShopDataToFirestore(shopData);
                         });
@@ -270,6 +272,7 @@ public class AddShopFragment extends Fragment {
                         shopData.put("verificationPending", true);
                         shopData.put("createdAt", System.currentTimeMillis());
                         shopData.put("visible", true);
+                        shopData.put("status", "pending"); // Set status to pending for admin approval
                         
                         saveShopDataToFirestore(shopData);
                     });

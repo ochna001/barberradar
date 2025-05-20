@@ -59,8 +59,8 @@ public class AllShopsFragment extends Fragment implements ShopSubmissionAdapter.
         // Set up RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         
-        // Create adapter with click listener for shop actions
-        adapter = new ShopSubmissionAdapter(new ArrayList<>(), this);
+        // Create adapter with click listener for shop actions and enable admin features
+        adapter = new ShopSubmissionAdapter(new ArrayList<>(), this, true);
         recyclerView.setAdapter(adapter);
         
         // Set up SwipeRefreshLayout
