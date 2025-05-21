@@ -12,6 +12,8 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.barberradar.ui.appointments.AppointmentSummary;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
@@ -27,6 +29,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.example.barberradar.R;
 import com.example.barberradar.adapters.BarberShopAdapter;
 import com.example.barberradar.databinding.FragmentDashboardBinding;
+import com.example.barberradar.models.Appointment;
 import com.example.barberradar.models.BarberShop;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -149,12 +152,184 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback, B
                             binding.serviceType.setText("Service: " + document.getString("serviceType"));
                         }
                         
-                        // Set click listener to view more details
+                        // Convert the document to an Appointment object
+                        Appointment appointment = new Appointment();
+                        appointment.setId(document.getId());
+                        
+                        // Set shop details
+                        appointment.setShopName(document.getString("shopName"));
+                        appointment.setShopId(document.getString("shopId"));
+                        
+                        // Get owner ID if available
+                        if (document.contains("ownerId")) {
+                            appointment.setOwnerId(document.getString("ownerId"));
+                        }
+                        
+                        // Set date and time
+                        appointment.setDate(document.getString("date"));
+                        appointment.setTime(document.getString("time"));
+                        
+                        // Set appointment date if available
+                        if (document.contains("appointmentDate")) {
+                            appointment.setAppointmentDate(document.getDate("appointmentDate"));
+                        }
+                        
+                        // Set service details - check both service and serviceType fields
+                        String service = document.getString("service");
+                        String serviceType = document.getString("serviceType");
+                        
+                        // Make sure at least one service field is set
+                        if (service != null) {
+                            appointment.setService(service);
+                        } else if (serviceType != null) {
+                            appointment.setService(serviceType);
+                        }
+                        
+                        if (serviceType != null) {
+                            appointment.setServiceType(serviceType);
+                        } else if (service != null) {
+                            appointment.setServiceType(service);
+                        }
+                        
+                        // Set status fields
+                        String status = document.getString("status");
+                        if (status != null) {
+                            appointment.setStatus(status);
+                        } else {
+                            appointment.setStatus(Appointment.STATUS_PENDING);
+                        }
+                        
+                        String paymentStatus = document.getString("paymentStatus");
+                        if (paymentStatus != null) {
+                            appointment.setPaymentStatus(paymentStatus);
+                        } else {
+                            appointment.setPaymentStatus(Appointment.PAYMENT_STATUS_PENDING);
+                        }
+                        
+                        // Set payment details
+                        String paymentMethod = document.getString("paymentMethod");
+                        if (paymentMethod != null) {
+                            appointment.setPaymentMethod(paymentMethod);
+                        }
+                        
+                        // Get the price - try both price and amount fields and ensure a valid value is set
+                        double finalPrice = 0.0;
+                        boolean priceFound = false;
+                        
+                        // First check the price field which should be the primary source
+                        if (document.contains("price")) {
+                            Double price = document.getDouble("price");
+                            if (price != null && price > 0) {
+                                finalPrice = price;
+                                priceFound = true;
+                                Log.d("DashboardFragment", "Found price field: " + finalPrice);
+                            }
+                        }
+                        
+                        // If no valid price yet, check the amount field as fallback
+                        if (!priceFound && document.contains("amount")) {
+                            Double amount = document.getDouble("amount");
+                            if (amount != null && amount > 0) {
+                                finalPrice = amount;
+                                priceFound = true;
+                                Log.d("DashboardFragment", "Found amount field: " + finalPrice);
+                            }
+                        }
+                        
+                        // Set to the default service price if all else fails
+                        if (!priceFound) {
+                            // Use a reasonable default price
+                            finalPrice = 100.0;
+                            Log.d("DashboardFragment", "Using default price: " + finalPrice);
+                        }
+                        
+                        // Set the final price
+                        appointment.setPrice(finalPrice);
+                        
+                        // Log the final price for debugging
+                        Log.d("DashboardFragment", "Final appointment price: " + appointment.getPrice());
+                        
+                        // Get current user info to fill in any missing details
+                        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                        
+                        // Try to get customer info
+                        if (document.contains("fullName")) {
+                            appointment.setFullName(document.getString("fullName"));
+                        } else if (document.contains("customerName")) {
+                            appointment.setFullName(document.getString("customerName"));
+                        } else if (user != null && user.getDisplayName() != null) {
+                            appointment.setFullName(user.getDisplayName());
+                        }
+                        
+                        if (document.contains("email")) {
+                            appointment.setEmail(document.getString("email"));
+                        } else if (user != null && user.getEmail() != null) {
+                            appointment.setEmail(user.getEmail());
+                        }
+                        
+                        if (document.contains("phone")) {
+                            appointment.setPhone(document.getString("phone"));
+                        } else if (user != null && user.getPhoneNumber() != null) {
+                            appointment.setPhone(user.getPhoneNumber());
+                        }
+                        
+                        // Set customer ID and customer name
+                        if (document.contains("customerId")) {
+                            appointment.setCustomerId(document.getString("customerId"));
+                        } else if (user != null) {
+                            appointment.setCustomerId(user.getUid());
+                        }
+                        
+                        if (document.contains("customerName")) {
+                            appointment.setCustomerName(document.getString("customerName"));
+                        } else if (document.contains("fullName")) {
+                            appointment.setCustomerName(document.getString("fullName"));
+                        } else if (user != null && user.getDisplayName() != null) {
+                            appointment.setCustomerName(user.getDisplayName());
+                        }
+                        
+                        // Set click listener to view more details using AppointmentSummary
                         binding.appointmentCard.setOnClickListener(v -> {
-                            // Navigate to appointments fragment which will show details
-                            NavController navController = Navigation.findNavController(requireActivity(), 
-                                    R.id.nav_host_fragment_activity_main);
-                            navController.navigate(R.id.navigation_appointments);
+                            // Show appointment details using AppointmentSummary
+                            AppointmentSummary.showSummary(requireContext(), appointment, new AppointmentSummary.AppointmentSummaryListener() {
+                                @Override
+                                public void onConfirm() {
+                                    // Just close the dialog
+                                }
+                                
+                                @Override
+                                public void onBack() {
+                                    // Not used in details mode
+                                }
+                                
+                                @Override
+                                public void onCancel() {
+                                    // Cancel the appointment
+                                    cancelAppointment(appointment);
+                                }
+                            }, AppointmentSummary.MODE_DETAILS);
+                        });
+                        
+                        // Also update the details button to show the same summary
+                        binding.appointmentDetailsButton.setOnClickListener(v -> {
+                            // Show appointment details using AppointmentSummary
+                            AppointmentSummary.showSummary(requireContext(), appointment, new AppointmentSummary.AppointmentSummaryListener() {
+                                @Override
+                                public void onConfirm() {
+                                    // Just close the dialog
+                                }
+                                
+                                @Override
+                                public void onBack() {
+                                    // Not used in details mode
+                                }
+                                
+                                @Override
+                                public void onCancel() {
+                                    // Cancel the appointment
+                                    cancelAppointment(appointment);
+                                }
+                            }, AppointmentSummary.MODE_DETAILS);
                         });
                     } else {
                         showNoAppointments();
@@ -175,6 +350,41 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback, B
         binding.appointmentCard.setVisibility(View.GONE);
         binding.noAppointmentsMessage.setVisibility(View.VISIBLE);
         binding.progressBar.setVisibility(View.GONE);
+    }
+    
+    /**
+     * Cancels an appointment by updating its status in Firestore
+     * @param appointment The appointment to cancel
+     */
+    private void cancelAppointment(Appointment appointment) {
+        // Show loading indicator
+        binding.progressBar.setVisibility(View.VISIBLE);
+        
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        
+        // Update the appointment status to cancelled
+        db.collection("appointments").document(appointment.getId())
+            .update(
+                "status", Appointment.STATUS_CANCELLED,
+                "updatedAt", new Date()
+            )
+            .addOnSuccessListener(aVoid -> {
+                // Hide loading indicator
+                binding.progressBar.setVisibility(View.GONE);
+                
+                // Show success message
+                Toast.makeText(requireContext(), "Appointment cancelled successfully", Toast.LENGTH_SHORT).show();
+                
+                // Refresh the dashboard to update the UI
+                refreshDashboard();
+            })
+            .addOnFailureListener(e -> {
+                // Hide loading indicator
+                binding.progressBar.setVisibility(View.GONE);
+                
+                // Show error message
+                Toast.makeText(requireContext(), "Failed to cancel appointment: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
     }
 
     private void refreshDashboard() {

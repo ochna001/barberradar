@@ -65,12 +65,6 @@ public class BarberShopAdapter extends RecyclerView.Adapter<BarberShopAdapter.Ba
                 .error(placeholderResId)
                 .into(holder.shopPhoto);
 
-        // Set Google rating and review count (fallback to default values if unavailable)
-        if (barberShop.getRating() > 0) {
-            holder.googleRatingText.setText("⭐ " + barberShop.getRating() + " (" + barberShop.getUserRatingsTotal() + " Google reviews)");
-        } else {
-            holder.googleRatingText.setText("No Google ratings available");
-        }
 
         // Set app-specific rating and review count (fallback to default values if unavailable)
         if (barberShop.getAppRating() > 0) {
@@ -154,14 +148,14 @@ public class BarberShopAdapter extends RecyclerView.Adapter<BarberShopAdapter.Ba
 
     static class BarberShopViewHolder extends RecyclerView.ViewHolder {
         final ImageView shopPhoto;
-        final TextView shopName, shopLocation, googleRatingText, appRatingText;
+        final TextView shopName, shopLocation, appRatingText;
 
         public BarberShopViewHolder(@NonNull View itemView) {
             super(itemView);
             shopPhoto = itemView.findViewById(R.id.shop_photo);
             shopName = itemView.findViewById(R.id.shop_name);
             shopLocation = itemView.findViewById(R.id.shop_location);
-            googleRatingText = itemView.findViewById(R.id.google_rating_text);
+
             appRatingText = itemView.findViewById(R.id.app_rating_text);
         }
     }

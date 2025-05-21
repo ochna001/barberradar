@@ -4,19 +4,24 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.barberradar.R;
 import com.example.barberradar.models.Appointment;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -44,6 +49,18 @@ public class AppointmentHistoryAdapter extends RecyclerView.Adapter<AppointmentH
         return new ViewHolder(view);
     }
 
+    // Interface for handling appointment actions
+    public interface AppointmentActionListener {
+        void onCancelAppointment(Appointment appointment);
+        void onAppointmentUpdated();
+    }
+    
+    private AppointmentActionListener actionListener;
+    
+    public void setAppointmentActionListener(AppointmentActionListener listener) {
+        this.actionListener = listener;
+    }
+    
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Appointment appointment = appointments.get(position);
@@ -84,6 +101,69 @@ public class AppointmentHistoryAdapter extends RecyclerView.Adapter<AppointmentH
             holder.cardView.setCardBackgroundColor(
                     ContextCompat.getColor(context, R.color.pending_appointment_bg));
         }
+        
+        // Set up details button click listener
+        holder.btnDetails.setOnClickListener(v -> {
+            if (context instanceof FragmentActivity) {
+                FragmentActivity activity = (FragmentActivity) context;
+                
+                // Show appointment details using AppointmentSummary
+                AppointmentSummary.showSummary(activity, appointment, new AppointmentSummary.AppointmentSummaryListener() {
+                    @Override
+                    public void onConfirm() {
+                        // Just close the dialog
+                    }
+                    
+                    @Override
+                    public void onBack() {
+                        // Not used in details mode
+                    }
+                    
+                    @Override
+                    public void onCancel() {
+                        // Cancel the appointment
+                        cancelAppointment(appointment);
+                    }
+                }, AppointmentSummary.MODE_DETAILS);
+            }
+        });
+    }
+    
+    /**
+     * Cancels an appointment by updating its status in Firestore
+     * @param appointment The appointment to cancel
+     */
+    private void cancelAppointment(Appointment appointment) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        
+        // Update the appointment status to cancelled
+        db.collection("appointments").document(appointment.getId())
+            .update(
+                "status", Appointment.STATUS_CANCELLED,
+                "updatedAt", new Date()
+            )
+            .addOnSuccessListener(aVoid -> {
+                // Update local data
+                appointment.setStatus(Appointment.STATUS_CANCELLED);
+                appointment.setUpdatedAt(new Date());
+                notifyDataSetChanged();
+                
+                // Notify listener
+                if (actionListener != null) {
+                    actionListener.onCancelAppointment(appointment);
+                    actionListener.onAppointmentUpdated();
+                }
+                
+                // Show success message
+                if (context instanceof FragmentActivity) {
+                    Toast.makeText(context, "Appointment cancelled successfully", Toast.LENGTH_SHORT).show();
+                }
+            })
+            .addOnFailureListener(e -> {
+                if (context instanceof FragmentActivity) {
+                    Toast.makeText(context, "Failed to cancel appointment: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
     }
 
     private void configureStatusChip(Chip chip, String status) {
@@ -121,6 +201,7 @@ public class AppointmentHistoryAdapter extends RecyclerView.Adapter<AppointmentH
         TextView tvCustomerName, tvService, tvDate, tvNotes;
         Chip chipStatus, chipPayment;
         MaterialCardView cardView;
+        Button btnDetails;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -131,6 +212,7 @@ public class AppointmentHistoryAdapter extends RecyclerView.Adapter<AppointmentH
             tvNotes = itemView.findViewById(R.id.tv_notes);
             chipStatus = itemView.findViewById(R.id.chip_status);
             chipPayment = itemView.findViewById(R.id.chip_payment);
+            btnDetails = itemView.findViewById(R.id.btn_details);
         }
     }
 }

@@ -168,10 +168,22 @@ public class DashboardViewModel extends ViewModel {
                         
                         // Format appointment details
                         String shortId = appointmentId.length() > 5 ? appointmentId.substring(0, 5).toUpperCase() : appointmentId.toUpperCase();
-                        Number amount = appointment.getDouble("amount");
-                        String amountStr = amount != null ? String.format("$%.2f", amount.doubleValue()) : "$0";
-                        appointmentDetails.setValue("ID: " + shortId + " | Amount: " + amountStr);
-                        Log.d("DashboardViewModel", "Set appointment details: ID: " + shortId + " | Amount: " + amountStr);
+                        
+                        // First check for price field (preferred)
+                        Double price = appointment.getDouble("price");
+                        
+                        // If price field doesn't exist, try amount as fallback
+                        if (price == null) {
+                            price = appointment.getDouble("amount");
+                            Log.d("DashboardViewModel", "Price not found, using amount field instead");
+                        }
+                        
+                        // Format the price and handle null case with Philippine Peso symbol
+                        String priceStr = price != null ? String.format("₱%.2f", price) : "₱0";
+                        
+                        // Set the appointment details with price value from database
+                        appointmentDetails.setValue("ID: " + shortId + " | Amount: " + priceStr);
+                        Log.d("DashboardViewModel", "Set appointment details: ID: " + shortId + " | Amount: " + priceStr);
                         
                         // Update appointment visibility right away
                         hasAppointments.setValue(true);

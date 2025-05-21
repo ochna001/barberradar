@@ -74,6 +74,19 @@
                 android:textColor="@android:color/white"
                 tools:chipBackgroundColor="@color/paid_status"
                 tools:text="Paid" />
+                
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+                
+            <Button
+                android:id="@+id/btn_details"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Details"
+                android:textSize="12sp"
+                style="@style/Widget.MaterialComponents.Button.TextButton" />
         </LinearLayout>
     </LinearLayout>
 

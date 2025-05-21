@@ -49,24 +49,6 @@
                 android:layout_marginTop="4dp"
                 android:textColor="@color/black" />
 
-            <!-- Google Rating Section -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <!-- Google Rating Display -->
-                <TextView
-                    android:id="@+id/google_rating_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="⭐ 4.5 (123 Google reviews)"
-                    android:textSize="16sp"
-                    android:textColor="@color/black"
-                    android:layout_marginEnd="8dp" />
-            </LinearLayout>
 
             <!-- App Rating Section -->
             <LinearLayout

@@ -3,6 +3,9 @@ package com.example.barberradar.ui.appointments;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
+import android.app.TimePickerDialog;
+import android.os.Build;
+import android.widget.TimePicker;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -86,11 +89,12 @@ public class AppointmentsFragment extends Fragment {
     private AppointmentsViewModel appointmentsViewModel;
     private LinearLayout appointmentForm, containerStep1, containerStep2;
     private LinearLayout shopSelectionSection; // Container for Section B
-    private Spinner spinnerShops, spinnerTimeSlots;
+    private Spinner spinnerShops;
     private TextView tvProgress, tvMonthHeader;
     private Button btnBack, btnNext, btnConfirm;
     private Button btnAddAppointment, btnSetAppointment;
-    private EditText etFullName, etEmail, etPhone, etDate, etService, etCardNumber, etExpiry, etCVV, etAmount;
+    private EditText etFullName, etEmail, etPhone, etDate, etCardNumber, etExpiry, etCVV, etAmount;
+    private Spinner spinnerServices;
     private RadioGroup paymentMethodGroup;
     private LinearLayout creditCardSection, gcashSection;
     private PaymentManager paymentManager;
@@ -215,17 +219,33 @@ public class AppointmentsFragment extends Fragment {
         etEmail = view.findViewById(R.id.et_email);
         etPhone = view.findViewById(R.id.et_phone);
         etDate = view.findViewById(R.id.et_date);
-        etService = view.findViewById(R.id.et_service);
-        EditText etCardNumber = view.findViewById(R.id.et_card_number); // Initialize payment field
-        EditText etExpiry = view.findViewById(R.id.et_expiry); // Initialize expiry date field
-        EditText etCVV = view.findViewById(R.id.et_cvv); // Initialize CVV field
-        EditText etAmount = view.findViewById(R.id.et_amount); // Initialize amount field
+        spinnerServices = view.findViewById(R.id.spinner_services);
+        etCardNumber = view.findViewById(R.id.et_card_number); // Initialize payment field
+        etExpiry = view.findViewById(R.id.et_expiry); // Initialize expiry date field
+        etCVV = view.findViewById(R.id.et_cvv); // Initialize CVV field
+        etAmount = view.findViewById(R.id.et_amount); // Initialize amount field
+        
+        // Set up services spinner
+        setupServicesSpinner();
 
         // Initialize Views (Ensure all UI elements are linked correctly)
         appointmentForm = view.findViewById(R.id.container_form);
         shopSelectionSection = view.findViewById(R.id.shop_selection_section);
         spinnerShops = view.findViewById(R.id.spinner_shops);
-        spinnerTimeSlots = view.findViewById(R.id.spinner_time_slots);
+        
+        // Get references to time picker UI elements
+        final EditText etSelectedTime = view.findViewById(R.id.et_selected_time);
+        final Button btnSelectTime = view.findViewById(R.id.btn_select_time);
+        
+        // Set up time picker button click listener
+        btnSelectTime.setOnClickListener(v -> {
+            showTimePickerDialog(etSelectedTime);
+        });
+        
+        // Make the EditText open the time picker when clicked
+        etSelectedTime.setOnClickListener(v -> {
+            showTimePickerDialog(etSelectedTime);
+        });
         
         // Get references for the buttons
         btnAddAppointment = view.findViewById(R.id.btn_add_appointment);
@@ -238,7 +258,10 @@ public class AppointmentsFragment extends Fragment {
         
         // Initially hide shop selection controls
         spinnerShops.setVisibility(View.GONE);
-        spinnerTimeSlots.setVisibility(View.GONE);
+        
+        // Hide time picker UI elements
+        if (etSelectedTime != null) etSelectedTime.setVisibility(View.GONE);
+        if (btnSelectTime != null) btnSelectTime.setVisibility(View.GONE);
         
         // Call the method to populate shop and time data
         populateShopAndTimes();
@@ -371,13 +394,14 @@ public class AppointmentsFragment extends Fragment {
         btnSetAppointment.setOnClickListener(v -> {
             // Get the selected shop from Spinner
             String selectedShop = (String) spinnerShops.getSelectedItem();
-            // Get the selected time slot from Spinner
-            Spinner spinnerTimeSlots = getView().findViewById(R.id.spinner_time_slots);
-            String selectedTimeSlot = (String) spinnerTimeSlots.getSelectedItem();
+            
+            // Get the selected time from EditText
+            EditText selectedTimeField = getView().findViewById(R.id.et_selected_time);
+            String selectedTimeSlot = selectedTimeField.getText().toString().trim();
 
             // Validate selections
-            if (selectedShop == null || selectedShop.isEmpty() || selectedTimeSlot == null || selectedTimeSlot.isEmpty()) {
-                Toast.makeText(requireContext(), "Please select a shop and time slot!", Toast.LENGTH_SHORT).show();
+            if (selectedShop == null || selectedShop.isEmpty() || selectedTimeSlot.isEmpty()) {
+                Toast.makeText(requireContext(), "Please select a shop and time!", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -425,9 +449,35 @@ public class AppointmentsFragment extends Fragment {
                 String phone = etPhone.getText().toString().trim();
                 String date = etDate.getText().toString().trim();
                 
+                // Check if any fields are empty
                 if (TextUtils.isEmpty(fullName) || TextUtils.isEmpty(email) || 
                     TextUtils.isEmpty(phone) || TextUtils.isEmpty(date)) {
                     Toast.makeText(requireContext(), "Please fill in all required fields", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                // Validate name (at least 3 characters, contains only letters and spaces)
+                if (fullName.length() < 3 || !fullName.matches("[a-zA-Z ]+")) {
+                    Toast.makeText(requireContext(), "Please enter a valid name (letters only)", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                // Validate email format
+                String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
+                if (!email.matches(emailPattern)) {
+                    Toast.makeText(requireContext(), "Please enter a valid email address", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                // Validate phone number (must be at least 10 digits)
+                if (!phone.matches("\\d+") || phone.length() < 10) {
+                    Toast.makeText(requireContext(), "Please enter a valid phone number (at least 10 digits)", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                // Validate date is not empty and in the future
+                if (TextUtils.isEmpty(date)) {
+                    Toast.makeText(requireContext(), "Please select an appointment date", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 
@@ -464,15 +514,41 @@ public class AppointmentsFragment extends Fragment {
                 });
             } else if (currentStep == 2) {
                 // Handle step 2 validation if needed
-                String service = etService.getText().toString().trim();
-                if (service.isEmpty()) {
-                    Toast.makeText(requireContext(), "Please enter a service", Toast.LENGTH_SHORT).show();
+                String selectedService = (String) spinnerServices.getSelectedItem();
+                if (selectedService == null) {
+                    Toast.makeText(requireContext(), "Please select a service", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                appointmentsViewModel.setService(service);
                 
-                // Proceed with appointment confirmation
-                confirmAppointment();
+                // Extract service name from the selected item
+                String serviceName = selectedService.substring(0, selectedService.lastIndexOf(" - "));
+                appointmentsViewModel.setService(serviceName);
+                
+                // Create an appointment object for the summary
+                Appointment appointmentSummary = createAppointmentObject();
+                
+                // Show appointment summary before final confirmation
+                AppointmentSummary.showSummary(requireContext(), appointmentSummary, new AppointmentSummary.AppointmentSummaryListener() {
+                    @Override
+                    public void onConfirm() {
+                        // Proceed with appointment confirmation
+                        confirmAppointment();
+                    }
+                    
+                    @Override
+                    public void onBack() {
+                        // Go back to step 2
+                        // No need to change currentStep since we're already on step 2
+                        // Just update the UI to ensure it's visible
+                        updateStep();
+                    }
+                    
+                    @Override
+                    public void onCancel() {
+                        // Not used in confirmation mode
+                        // This is only used when viewing existing appointments
+                    }
+                });
             }
         });
         btnBack.setOnClickListener(v -> {
@@ -513,12 +589,13 @@ public class AppointmentsFragment extends Fragment {
             String email = etEmail.getText().toString();
             String phone = etPhone.getText().toString();
             String date = etDate.getText().toString();
-            String service = etService.getText().toString();
+            String selectedService = (String) spinnerServices.getSelectedItem();
+            String service = selectedService != null ? selectedService.substring(0, selectedService.lastIndexOf(" - ")) : "";
 
-            // Fetch selected shop and time slot from Section B
+            // Fetch selected shop from spinner and time from time picker
             String shopName = (String) spinnerShops.getSelectedItem(); // Get shop from Spinner
-            Spinner spinnerTimeSlots = getView().findViewById(R.id.spinner_time_slots); // Use Spinner for time slots
-            String time = (String) spinnerTimeSlots.getSelectedItem(); // Get time slot from Spinner
+            EditText selectedTimeField = getView().findViewById(R.id.et_selected_time);
+            String time = selectedTimeField.getText().toString().trim(); // Get time from EditText
             
             // Get payment amount
             String amountStr = etAmount.getText().toString().trim();
@@ -606,19 +683,46 @@ public class AppointmentsFragment extends Fragment {
             
             // Create an Appointment object
             final Appointment appointment = new Appointment();
+            
+            // Set user and customer details
             appointment.setUserId(userId);
+            appointment.setCustomerId(userId);
             appointment.setFullName(fullName);
             appointment.setCustomerName(fullName);
-            appointment.setCustomerId(userId);
+            appointment.setEmail(email);
+            appointment.setPhone(phone);
+            
+            // Set appointment details
             appointment.setAppointmentDate(appointmentDate);
+            // Also set the date field in string format for easier querying
+            DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+            appointment.setDate(selectedDate.format(formatter2));
             appointment.setTime(time);
+            
+            // Set service details
             appointment.setService(service);
             appointment.setServiceType(service);
+            appointment.setPrice(amount); // Set the actual price
+            // Log the price for debugging
+            Log.d(TAG, "Setting appointment price to: " + amount);
+            
+            // Set shop details
             appointment.setShopId(shopId);
             appointment.setShopName(shopName);
+            
+            // Set payment details
             appointment.setPaymentMethod(paymentMethod);
             appointment.setPaymentStatus(Appointment.PAYMENT_STATUS_PENDING);
+            appointment.setPaid(false); // Set payment status
+            
+            // Set appointment status
             appointment.setStatus(Appointment.STATUS_PENDING);
+            appointment.setCompleted(false);
+            
+            // Set timestamps
+            Date now = new Date();
+            appointment.setCreatedAt(now);
+            appointment.setUpdatedAt(now);
             
             // Set last four digits if using credit card
             if (!lastFourDigits.isEmpty()) {
@@ -765,7 +869,10 @@ public class AppointmentsFragment extends Fragment {
         etEmail.setText("");
         etPhone.setText("");
         etDate.setText("");
-        etService.setText("");
+        // Reset spinner to first position
+        if (spinnerServices != null && spinnerServices.getAdapter() != null && spinnerServices.getAdapter().getCount() > 0) {
+            spinnerServices.setSelection(0);
+        }
         
         // Reset to step 1
         currentStep = 1;
@@ -819,34 +926,74 @@ public class AppointmentsFragment extends Fragment {
                         return;
                     }
                     
-                    // Create a dialog to show appointment details
-                    AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-                    builder.setTitle("Appointment Details - " + dateString);
+                    // Get the first appointment document
+                    DocumentSnapshot document = queryDocumentSnapshots.getDocuments().get(0);
                     
-                    // Build the message with appointment details
-                    StringBuilder message = new StringBuilder();
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        // Get appointment details
-                        String shopName = document.getString("shopName");
-                        String time = document.getString("time");
-                        String service = document.getString("service");
-                        String paymentMethod = document.getString("paymentMethod");
-                        Double amount = document.getDouble("amount");
-                        String paymentStatus = document.getString("paymentStatus");
-                        
-                        message.append("Shop: ").append(shopName != null ? shopName : "Not specified").append("\n");
-                        message.append("Time: ").append(time != null ? time : "Not specified").append("\n");
-                        message.append("Service: ").append(service != null ? service : "Not specified").append("\n");
-                        message.append("Payment Method: ").append(paymentMethod != null ? paymentMethod : "Not specified").append("\n");
-                        if (amount != null) {
-                            message.append("Amount: $").append(String.format("%.2f", amount)).append("\n");
-                        }
-                        message.append("Status: ").append(paymentStatus != null ? paymentStatus : "Pending").append("\n\n");
+                    // Log the document ID for debugging
+                    String documentId = document.getId();
+                    Log.d(TAG, "Retrieved appointment with document ID: " + documentId);
+                    
+                    // Convert the document to an Appointment object
+                    Appointment appointment = new Appointment();
+                    appointment.setId(documentId); // Make sure we're setting the document ID
+                    
+                    // Set basic appointment details
+                    appointment.setShopName(document.getString("shopName"));
+                    appointment.setDate(dateString);
+                    appointment.setTime(document.getString("time"));
+                    appointment.setService(document.getString("service"));
+                    appointment.setServiceType(document.getString("serviceType"));
+                    
+                    // Set status fields
+                    String status = document.getString("status");
+                    appointment.setStatus(status != null ? status : Appointment.STATUS_PENDING);
+                    
+                    String paymentStatus = document.getString("paymentStatus");
+                    appointment.setPaymentStatus(paymentStatus != null ? paymentStatus : Appointment.PAYMENT_STATUS_PENDING);
+                    
+                    // Set payment details
+                    appointment.setPaymentMethod(document.getString("paymentMethod"));
+                    
+                    // Set price if available
+                    if (document.contains("price")) {
+                        appointment.setPrice(document.getDouble("price"));
                     }
                     
-                    builder.setMessage(message.toString().trim());
-                    builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
-                    builder.create().show();
+                    // Set customer details
+                    if (document.contains("fullName")) {
+                        appointment.setFullName(document.getString("fullName"));
+                    } else {
+                        appointment.setFullName(currentUser.getDisplayName());
+                    }
+                    
+                    if (document.contains("email")) {
+                        appointment.setEmail(document.getString("email"));
+                    } else {
+                        appointment.setEmail(currentUser.getEmail());
+                    }
+                    
+                    if (document.contains("phone")) {
+                        appointment.setPhone(document.getString("phone"));
+                    }
+                    
+                    // Show appointment details using AppointmentSummary
+                    AppointmentSummary.showSummary(requireContext(), appointment, new AppointmentSummary.AppointmentSummaryListener() {
+                        @Override
+                        public void onConfirm() {
+                            // Just close the dialog
+                        }
+                        
+                        @Override
+                        public void onBack() {
+                            // Not used in details mode
+                        }
+                        
+                        @Override
+                        public void onCancel() {
+                            // Cancel the appointment
+                            cancelAppointment(appointment);
+                        }
+                    }, AppointmentSummary.MODE_DETAILS);
                 })
                 .addOnFailureListener(e -> {
                     progressDialog.dismiss();
@@ -854,6 +1001,61 @@ public class AppointmentsFragment extends Fragment {
                     Toast.makeText(requireContext(), "Failed to load appointments: " + e.getMessage(), 
                         Toast.LENGTH_SHORT).show();
                 });
+    }
+    
+    /**
+     * Cancels an appointment by updating its status in Firestore
+     * @param appointment The appointment to cancel
+     */
+    private void cancelAppointment(Appointment appointment) {
+        // Show loading indicator
+        ProgressDialog progressDialog = new ProgressDialog(requireContext());
+        progressDialog.setMessage("Cancelling appointment...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        
+        // Log the appointment ID for debugging
+        String appointmentId = appointment.getId();
+        Log.d(TAG, "Cancelling appointment with ID: " + appointmentId);
+        
+        if (appointmentId == null || appointmentId.isEmpty()) {
+            progressDialog.dismiss();
+            Toast.makeText(requireContext(), "Error: Invalid appointment ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // Update the appointment status to cancelled
+        db.collection("appointments").document(appointmentId)
+            .update(
+                "status", Appointment.STATUS_CANCELLED,
+                "updatedAt", new Date()
+            )
+            .addOnSuccessListener(aVoid -> {
+                progressDialog.dismiss();
+                
+                // Show success message
+                Toast.makeText(requireContext(), "Appointment cancelled successfully", Toast.LENGTH_SHORT).show();
+                
+                // Refresh appointments in calendar view
+                // Update the calendar display
+                
+                // Refresh the appointments list
+                if (appointmentHistoryAdapter != null) {
+                    loadAppointments(appointmentHistoryAdapter);
+                }
+                
+                // Update calendar indicators
+                updateCalendarIndicators();
+            })
+            .addOnFailureListener(e -> {
+                progressDialog.dismiss();
+                Log.e(TAG, "Error cancelling appointment: " + e.getMessage());
+                
+                // Show error message
+                Toast.makeText(requireContext(), "Failed to cancel appointment: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
     }
     
     /**
@@ -1112,29 +1314,22 @@ public class AppointmentsFragment extends Fragment {
             tvEmptyShops.setVisibility(View.VISIBLE);
         }
         
-        // Initially disable the button and hide spinners
+        // Initially disable the button and hide shop spinner
         btnSetAppointment.setEnabled(false);
         spinnerShops.setVisibility(View.GONE);
-        spinnerTimeSlots.setVisibility(View.GONE);
         
-        // Set up time slots first (static data)
-        List<String> availableTimes = new ArrayList<>();
-        availableTimes.add("09:00 AM");
-        availableTimes.add("10:00 AM");
-        availableTimes.add("11:00 AM");
-        availableTimes.add("01:00 PM");
-        availableTimes.add("02:00 PM");
-
-        ArrayAdapter<String> timeAdapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                availableTimes
-        );
-        timeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerTimeSlots.setAdapter(timeAdapter);
-        
-        // Only show time slots when we have shops
-        spinnerTimeSlots.setVisibility(View.GONE);
+        // Make sure the time picker UI is initially hidden
+        View view = getView();
+        if (view != null) {
+            EditText timeField = view.findViewById(R.id.et_selected_time);
+            Button timeButton = view.findViewById(R.id.btn_select_time);
+            if (timeField != null) {
+                timeField.setVisibility(View.GONE);
+            }
+            if (timeButton != null) {
+                timeButton.setVisibility(View.GONE);
+            }
+        }
 
         // Fetch shops from Firestore
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -1159,6 +1354,13 @@ public class AppointmentsFragment extends Fragment {
                     // Update ViewModel with shop owner mapping
                     appointmentsViewModel.setShopOwnerMap(shopOwnerMap);
                     
+                    View currentView = getView();
+                    if (currentView == null) return;
+                    
+                    // Get references to time picker UI elements
+                    EditText timeField = currentView.findViewById(R.id.et_selected_time);
+                    Button timeButton = currentView.findViewById(R.id.btn_select_time);
+                    
                     // Update UI based on whether we found any shops
                     if (availableShops.isEmpty()) {
                         if (tvEmptyShops != null) {
@@ -1166,7 +1368,11 @@ public class AppointmentsFragment extends Fragment {
                             tvEmptyShops.setVisibility(View.VISIBLE);
                         }
                         spinnerShops.setVisibility(View.GONE);
-                        spinnerTimeSlots.setVisibility(View.GONE);
+                        
+                        // Hide time picker UI
+                        if (timeField != null) timeField.setVisibility(View.GONE);
+                        if (timeButton != null) timeButton.setVisibility(View.GONE);
+                        
                         btnSetAppointment.setEnabled(false);
                     } else {
                         if (tvEmptyShops != null) {
@@ -1182,7 +1388,10 @@ public class AppointmentsFragment extends Fragment {
                         shopAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                         spinnerShops.setAdapter(shopAdapter);
                         spinnerShops.setVisibility(View.VISIBLE);
-                        spinnerTimeSlots.setVisibility(View.VISIBLE);
+                        
+                        // Show time picker UI
+                        if (timeField != null) timeField.setVisibility(View.VISIBLE);
+                        if (timeButton != null) timeButton.setVisibility(View.VISIBLE);
                         
                         // Enable the button since we have shops
                         btnSetAppointment.setEnabled(true);
@@ -1201,13 +1410,108 @@ public class AppointmentsFragment extends Fragment {
                             }
                             
                             spinnerShops.setVisibility(View.GONE);
-                            spinnerTimeSlots.setVisibility(View.GONE);
+                            
+                            // Hide time picker UI
+                            View rootView = getView();
+                            if (rootView != null) {
+                                EditText timeField = rootView.findViewById(R.id.et_selected_time);
+                                Button timeButton = rootView.findViewById(R.id.btn_select_time);
+                                if (timeField != null) timeField.setVisibility(View.GONE);
+                                if (timeButton != null) timeButton.setVisibility(View.GONE);
+                            }
+                            
                             btnSetAppointment.setEnabled(false);
                         });
                     }
                 });
     }
 
+    /**
+     * Shows a time picker dialog with shop hour limits (9 AM to 5 PM).
+     * @param etSelectedTime The EditText to update with the selected time
+     */
+    private void showTimePickerDialog(EditText etSelectedTime) {
+        // Get current time for default values
+        Calendar calendar = Calendar.getInstance();
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+        
+        // Shop opening hours: 9 AM - 5 PM
+        final int OPENING_HOUR = 9;
+        final int CLOSING_HOUR = 17; // 5 PM in 24-hour format
+        
+        // Round to nearest 15 minutes for default time
+        minute = (minute / 15) * 15;
+        
+        // Set default time within shop hours
+        if (hour < OPENING_HOUR) {
+            hour = OPENING_HOUR;
+            minute = 0;
+        } else if (hour >= CLOSING_HOUR) {
+            hour = OPENING_HOUR; // Default to opening time if current time is past closing
+            minute = 0;
+        }
+        
+        // Create a time picker dialog
+        TimePickerDialog timePickerDialog = new TimePickerDialog(
+            requireContext(),
+            (view, selectedHour, selectedMinute) -> {
+                // Validate the selected time is within shop hours
+                if (selectedHour < OPENING_HOUR || selectedHour >= CLOSING_HOUR) {
+                    Toast.makeText(requireContext(), 
+                        "Please select a time between " + formatHour(OPENING_HOUR) + " and " + formatHour(CLOSING_HOUR-1) + ".",
+                        Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                // Format the selected time (convert to 12-hour format with AM/PM)
+                String formattedTime = formatTime(selectedHour, selectedMinute);
+                
+                // Update the EditText with the selected time
+                etSelectedTime.setText(formattedTime);
+            },
+            hour,
+            minute,
+            false // 12-hour format
+        );
+        
+        // Set time picker limits - we'll use the setOnTimeChangedListener instead of trying to get the TimePicker widget
+        timePickerDialog.setOnShowListener(dialog -> {
+            // Since finding TimePicker directly can be problematic due to Android version differences,
+            // we'll just validate time when the user selects it instead of trying to limit the picker UI
+            
+            // The selected time validation is already handled in the onTimeSet callback
+            // where we check if the selected hour is within the opening and closing hours
+        });
+        
+        // Show the dialog
+        timePickerDialog.show();
+    }
+    
+    /**
+     * Formats the hour in 12-hour format with AM/PM
+     */
+    private String formatHour(int hour) {
+        if (hour == 0) {
+            return "12 AM";
+        } else if (hour < 12) {
+            return hour + " AM";
+        } else if (hour == 12) {
+            return "12 PM";
+        } else {
+            return (hour - 12) + " PM";
+        }
+    }
+    
+    /**
+     * Formats the time in 12-hour format with AM/PM
+     */
+    private String formatTime(int hour, int minute) {
+        String amPm = (hour < 12) ? "AM" : "PM";
+        int hour12 = (hour == 0) ? 12 : ((hour > 12) ? hour - 12 : hour);
+        return String.format(Locale.US, "%d:%02d %s", hour12, minute, amPm);
+    }
+    
     /**
      * Checks if the shop is open on the given date using java.util.Calendar.
      * (Example: shop is closed on Sundays.)
@@ -1337,11 +1641,15 @@ public class AppointmentsFragment extends Fragment {
             return;
         }
         
+        // Get selected service name
+        String selectedService = (String) spinnerServices.getSelectedItem();
+        String serviceName = selectedService != null ? selectedService.substring(0, selectedService.lastIndexOf(" - ")) : "Service";
+        
         // Create payment intent request for credit card
         CreatePaymentIntentRequest request = new CreatePaymentIntentRequest(
             (int) amount,
             CURRENCY,
-            "Appointment payment for " + etService.getText().toString(),
+            "Appointment payment for " + serviceName,
             "card"  // Specify payment method type
         );
         
@@ -1359,11 +1667,15 @@ public class AppointmentsFragment extends Fragment {
         loadingDialog.setCancelable(false);
         loadingDialog.show();
         
+        // Get selected service name
+        String selectedService = (String) spinnerServices.getSelectedItem();
+        String serviceName = selectedService != null ? selectedService.substring(0, selectedService.lastIndexOf(" - ")) : "Service";
+        
         // Create payment intent request for GCash
         CreatePaymentIntentRequest request = new CreatePaymentIntentRequest(
             (int) amount,
             CURRENCY,
-            "Appointment payment for " + etService.getText().toString(),
+            "Appointment payment for " + serviceName,
             "gcash"  // Specify GCash as payment method
         );
         
@@ -1714,40 +2026,42 @@ public class AppointmentsFragment extends Fragment {
     }
 
     /**
-     * Handles the final confirmation of the appointment
+     * Creates an appointment object with the current form data
+     * @return The created appointment object
      */
-    private void confirmAppointment() {
-        // Show progress dialog
-        ProgressDialog progressDialog = new ProgressDialog(requireContext());
-        progressDialog.setMessage("Processing payment...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
-        
+    private Appointment createAppointmentObject() {
         // Get current user
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) {
-            Toast.makeText(requireContext(), "User not logged in", Toast.LENGTH_SHORT).show();
-            progressDialog.dismiss();
-            return;
-        }
         
         // Get selected shop and time
         String selectedShop = (String) spinnerShops.getSelectedItem();
-        String selectedTime = (String) spinnerTimeSlots.getSelectedItem();
+        EditText timeField = getView().findViewById(R.id.et_selected_time);
+        String selectedTime = timeField.getText().toString().trim();
         
         // Create appointment object
         Appointment appointment = new Appointment();
-        appointment.setUserId(currentUser.getUid());
-        String displayName = currentUser.getDisplayName() != null ? 
-            currentUser.getDisplayName() : "Anonymous User";
-        appointment.setFullName(displayName);
-        appointment.setCustomerName(displayName);
-        appointment.setCustomerId(currentUser.getUid());
         
-        // Set shop info - in a real app, you'd get the shop ID from the selected shop
+        // Set user info
+        if (currentUser != null) {
+            appointment.setUserId(currentUser.getUid());
+            String displayName = currentUser.getDisplayName() != null ? 
+                currentUser.getDisplayName() : "Anonymous User";
+            appointment.setFullName(appointmentsViewModel.getFullName());
+            appointment.setCustomerName(displayName);
+            appointment.setCustomerId(currentUser.getUid());
+            appointment.setEmail(appointmentsViewModel.getEmail());
+            appointment.setPhone(appointmentsViewModel.getPhone());
+        } else {
+            // Use form data if user isn't logged in
+            appointment.setFullName(appointmentsViewModel.getFullName());
+            appointment.setCustomerName(appointmentsViewModel.getFullName());
+            appointment.setEmail(appointmentsViewModel.getEmail());
+            appointment.setPhone(appointmentsViewModel.getPhone());
+        }
+        
+        // Set shop info
         appointment.setShopName(selectedShop);
-        // You might want to set a default shop ID or fetch it based on the selected shop
-        // appointment.setShopId("default_shop_id");
+        appointment.setShopId(selectedShopId);
         
         // Set date and time
         String dateStr = appointmentsViewModel.getDate();
@@ -1765,15 +2079,59 @@ public class AppointmentsFragment extends Fragment {
         appointment.setTime(selectedTime);
         
         // Set service info
-        String service = appointmentsViewModel.getService();
-        appointment.setService(service);
-        appointment.setServiceType(service);
+        String selectedService = (String) spinnerServices.getSelectedItem();
+        // Extract just the service name part (before the price)
+        String serviceName = selectedService.substring(0, selectedService.lastIndexOf(" - "));
+        appointment.setService(serviceName);
+        appointment.setServiceType(serviceName);
+        
+        // Set price from the amount field
+        try {
+            double amount = Double.parseDouble(etAmount.getText().toString());
+            appointment.setPrice(amount);
+        } catch (NumberFormatException e) {
+            appointment.setPrice(100.0); // Default amount
+        }
+        
+        // Set payment method
+        int selectedId = paymentMethodGroup.getCheckedRadioButtonId();
+        if (selectedId == R.id.rb_credit_card) {
+            appointment.setPaymentMethod("Credit Card");
+        } else if (selectedId == R.id.rb_gcash) {
+            appointment.setPaymentMethod("GCash");
+        } else {
+            appointment.setPaymentMethod("Pay at Shop");
+        }
         
         // Set status
         appointment.setStatus(Appointment.STATUS_PENDING);
         appointment.setPaymentStatus(Appointment.PAYMENT_STATUS_PENDING);
         appointment.setCreatedAt(new Date());
         appointment.setUpdatedAt(new Date());
+        
+        return appointment;
+    }
+    
+    /**
+     * Handles the final confirmation of the appointment
+     */
+    private void confirmAppointment() {
+        // Show progress dialog
+        ProgressDialog progressDialog = new ProgressDialog(requireContext());
+        progressDialog.setMessage("Processing payment...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        
+        // Get current user
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            Toast.makeText(requireContext(), "User not logged in", Toast.LENGTH_SHORT).show();
+            progressDialog.dismiss();
+            return;
+        }
+        
+        // Create appointment object using the helper method
+        Appointment appointment = createAppointmentObject();
         
         // Process payment first
         processPayment(new OnPaymentResultListener() {
@@ -1819,6 +2177,53 @@ public class AppointmentsFragment extends Fragment {
                     progressDialog.dismiss();
                     Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
                 }
+            }
+        });
+    }
+    
+    /**
+     * Sets up the services spinner with available services
+     * This can be later updated to fetch services from a database
+     */
+    private void setupServicesSpinner() {
+        // Create a list of services with their prices
+        List<String> services = new ArrayList<>();
+        services.add("Normal Haircut - ₱100");
+        services.add("Beard Trim - ₱50");
+        services.add("Hair Color - ₱300");
+        services.add("Kids Haircut - ₱80");
+        services.add("Full Service - ₱500");
+        
+        // Create an adapter for the spinner
+        ArrayAdapter<String> servicesAdapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_spinner_item,
+                services
+        );
+        servicesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerServices.setAdapter(servicesAdapter);
+        
+        // Set listener to update price when service is selected
+        spinnerServices.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedService = (String) parent.getItemAtPosition(position);
+                // Extract price from the selected service
+                String priceStr = selectedService.substring(selectedService.lastIndexOf("₱") + 1).trim();
+                try {
+                    int price = Integer.parseInt(priceStr);
+                    // Update the amount field
+                    etAmount.setText(String.format("%.2f", (float)price));
+                } catch (NumberFormatException e) {
+                    Log.e(TAG, "Error parsing price: " + e.getMessage());
+                    etAmount.setText("100.00"); // Default price
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Set default price
+                etAmount.setText("100.00");
             }
         });
     }

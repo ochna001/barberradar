@@ -42,6 +42,8 @@ public class Appointment {
     private Date updatedAt;
     private String userId;
     private String fullName;
+    private String email;
+    private String phone;
     private String date;
     private String time;
     private String service;
@@ -72,6 +74,8 @@ public class Appointment {
     public String getId() { return id; }
     public String getUserId() { return userId; }
     public String getFullName() { return fullName; }
+    public String getEmail() { return email; }
+    public String getPhone() { return phone; }
     public String getDate() { return date; }
     public String getTime() { return time; }
     public String getService() { return service; }
@@ -111,6 +115,8 @@ public class Appointment {
     public void setId(String id) { this.id = id; }
     public void setUserId(String userId) { this.userId = userId; }
     public void setFullName(String fullName) { this.fullName = fullName; }
+    public void setEmail(String email) { this.email = email; }
+    public void setPhone(String phone) { this.phone = phone; }
     public void setDate(String date) { this.date = date; }
     public void setTime(String time) { this.time = time; }
     public void setService(String service) { this.service = service; }
@@ -171,6 +177,8 @@ public class Appointment {
         map.put("updatedAt", updatedAt);
         map.put("userId", userId);
         map.put("fullName", fullName);
+        map.put("email", email);
+        map.put("phone", phone);
         map.put("date", date);
         map.put("time", time);
         map.put("service", service);
